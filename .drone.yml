@@ -1,0 +1,20 @@
+workspace:
+  base: /drone
+  
+kind: pipeline
+name: default
+
+clone:
+  depth: 1
+  
+steps:
+- name: BuildDocker  #ghjk
+  image: plugins/docker
+  pull: always
+  settings:
+    username: root
+    password: csiicsii
+    registry: aidevops.qbicloud.com:5000
+    repo: aidevops.qbicloud.com:5000/plugin_curl
+    tags: test,latest
+    dockerfile: Dockerfile

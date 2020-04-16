@@ -1,0 +1,36 @@
+#/bin/bash 
+
+function urlencode() {
+    local data
+    if [[ $# != 1 ]]; then
+        echo "Usage: $0 string-to-urlencode"
+        return 1
+    fi
+    data="$(curl -s -o /dev/null -w %{url_effective} --get --data-urlencode "$1" "")"
+    if [[ $? != 3 ]]; then
+        echo "Unexpected error" 1>&2
+        echo "${data##/?}"
+    return 0
+    fi
+    data=$( echo $data | sed 's~/?~~g' )
+    echo $data
+}
+function urlinput() {
+    FilePath=$( urlencode "$4" )
+    file=$( echo $4 | awk -F'/' '{print $NF}')
+    curl --request GET --header "PRIVATE-TOKEN: $1" "$2/api/v4/projects/$3/repository/files/$FilePath/raw?ref=master" >>$file
+    cat $file
+}
+
+if [[ ! -z $1 ]]
+then
+    urlinput $@
+else
+    FilePath=$( urlencode "${PLUGIN_PATH}" )
+    file=$( echo ${PLUGIN_PATH} | awk -F'/' '{print $NF}')
+    curl --request GET --header "PRIVATE-TOKEN: ${PLUGIN_TOKEN}" "${PLUGIN_URL}/api/v4/projects/${PLUGIN_ID}/repository/files/${FilePath}/raw?ref=master" >>$file
+    cat $file
+    if grep -q "Not Found" "$File"; then
+        exit 1 # SomeString was found
+    fi
+fi
